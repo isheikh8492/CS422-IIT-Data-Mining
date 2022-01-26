@@ -1,0 +1,57 @@
+---
+title: "CS 422 - Homework 0"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+## Homework 0 
+### (NOT GRADED, TO BE USED AS TEMPLATE FOR OTHER HOMEWORKS)
+### Due Date: Tuesday, Jan 22 2019 11:59:59 PM Chicago Time
+
+### Part 1-A
+```{r}
+setwd(getwd())
+data(cars)
+cars
+```
+```{r}
+attach(cars)
+```
+### Part 1-B
+
+```{r}
+plot(cars, main="Scatter Plot for Cars Dataset", col="blue", xlab="Speed", ylab="Distance")
+```
+```{r}
+plot(cars, main="Line Plot for Cars Dataset", type="o", col="red", xlab="Speed", ylab="Distance")
+```
+### Part 1-C (Summary)
+```{r}
+summary(cars)
+```
+
+### Part 1-D
+```{r}
+summ <- summary(cars)
+max.speed.str <- summ[,1][6]
+max.speed.str <- strsplit(max.speed.str, ":")
+max.speed <- max.speed.str[[1]][2]
+
+min.dist.str <- summ[,2][1]
+min.dist.str <- strsplit(min.dist.str, ":  ")
+min.dist <- min.dist.str[[1]][2]
+
+str <- paste0("Maximum speed is ", max.speed, ", and minimum distance is ",min.dist)
+str
+```
+
+
+
