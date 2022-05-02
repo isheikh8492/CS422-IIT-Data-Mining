@@ -1,0 +1,211 @@
+---
+title: "CS 422 - Homework 5"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Monday, Mar 21 2022 11:59:59 PM Chicago Time
+
+******
+
+### 2. Problems
+
+******
+
+### 2.1. Grid search and Random Forests
+
+******
+
+```{r}
+setwd("~/Homework 5")
+adult.train.df <- read.csv("adult-train.csv")
+adult.test.df <- read.csv("adult-test.csv")
+library(caret)
+library(randomForest)
+```
+
+******
+
+```{r}
+head(adult.train.df)
+```
+```{r}
+head(adult.test.df)
+```
+
+```{r}
+sum(apply(adult.train.df, 1, function(r) any(r %in% "?")))
+```
+```{r}
+sum(apply(adult.test.df, 1, function(r) any(r %in% "?")))
+```
+
+```{r}
+adult.train.df <- adult.train.df[which(!apply(adult.train.df, 1, function(r) any(r %in% "?"))),]
+adult.train.df$income = factor(adult.train.df$income)
+```
+```{r}
+adult.test.df <- adult.test.df[which(!apply(adult.test.df, 1, function(r) any(r %in% "?"))),]
+adult.test.df$income = factor(adult.test.df$income)
+```
+```{r}
+dim(adult.train.df)
+```
+```{r}
+dim(adult.test.df)
+```
+
+******
+
+```{r}
+ntree.range <- c(250, 500, 750)
+mtry.range  <- c(sqrt(14), sqrt(14)+1, sqrt(14)+2)
+```
+
+******
+
+```{r}
+learn_model <- function(train.df, ntree.param, mtry.param) {
+  
+  model <- randomForest(income ~ ., 
+               method="class", 
+               ntree=ntree.param,
+               mtry=mtry.param,
+               data=train.df)
+  model
+}
+```
+
+******
+
+```{r}
+get_results <- function(model, pred, test.df) {
+  
+  a <- confusionMatrix(pred, as.factor(test.df[, 15]))
+
+  # Extract num.tree and mtry.param from the model object
+  num.tree <- model$ntree
+  mtry.param <- model$mtry
+  
+  # Extract acc, bal.acc, error, spec, sens, and prec from the variable a.
+  acc <- a[["overall"]][["Accuracy"]]
+  bal.acc <- a[["byClass"]][["Balanced Accuracy"]]
+  error <- 1.0 - acc
+  spec <- a[["byClass"]][["Specificity"]]
+  sens <- a[["byClass"]][["Sensitivity"]]
+  prec <- a[["byClass"]][["Pos Pred Value"]]
+  
+  # Extract oob from model$err.rate
+  oob <- model$err.rate[num.tree,][['OOB']]
+
+  results.df <- data.frame(ntree=num.tree,
+                           mtry=mtry.param,
+                           acc=acc,
+                           bal.acc=bal.acc,
+                           error=error,
+                           spec=spec,
+                           sens=sens,
+                           prec=prec,
+                           oob=oob)
+  rm(a)
+  results.df
+}
+```
+
+******
+
+```{r}
+set.seed(1122)
+
+results.df <- data.frame(ntree=0,
+                         mtry=0,
+                         acc=0,
+                         bal.acc=0,
+                         error=0,
+                         spec=0,
+                         sens=0,
+                         prec=0,
+                         oob=0) # Prime the results data frame.
+
+results.df
+```
+
+******
+
+```{r}
+for (i in ntree.range) {
+  for (j in mtry.range) {
+    str <- paste(Sys.time(), ": Starting model training on", i, "trees, and",
+                 floor(j), "attributes.\n")
+    cat(str)
+    model <- NULL
+    model <- learn_model(adult.train.df, ntree.param = i, mtry.param = j)
+    str <- paste(Sys.time(), ": Done.\n")
+    cat(str)
+    pred <- predict(model, newdata=adult.test.df, type="class")
+    tmp.df <- get_results(model, pred, adult.test.df)
+    results.df <- rbind(results.df, tmp.df)
+    rm(tmp.df)
+  }
+}
+```
+
+******
+
+### Part 2.1(1)
+
+******
+
+```{r}
+rownames(results.df) <- c()
+results.df <- results.df[-1, ] # Remove the first row (used to prime the frame)
+row.names(results.df) <- NULL
+round(results.df, 3)
+```
+
+******
+
+### Part 2.1(2)
+
+******
+
+### Part 2.1(2)(a)
+
+******
+
+```{r}
+best.model <- results.df[1,]
+paste("Grid search resulted in the best model at ntree = ",best.model$ntree, "and mtry = " ,best.model$mtry,".")
+paste0("Accuracy = ", signif(best.model$acc, 3))
+paste0("Balanced Accuracy = ", signif(best.model$bal.acc, 3), ".")
+paste0("Sensitivity = ", signif(best.model$sens, 3), ".")
+paste0("Specificity = ", signif(best.model$spec, 3), ".")
+```
+
+******
+
+### Part 2.1(2)(b)
+
+******
+
+```{r}
+best.model <- results.df[7,]
+paste("Grid search resulted in the best model for OOB at ntree = ",best.model$ntree, "and mtry = " ,best.model$mtry,".")
+paste0("OOB = ", signif(best.model$oob, 3))
+```
+
+******
+
+### Part 2.1(2)(c)
+
+******
+
+<span style="color: blue;">The best model is (a) has almost the same amount of accuracy, balanced accuracy, sensitivity and the specificity as the best model is (c), even though the number of trees in the random forest differ significantly keeping the number of randomly chosen attributes for each split constant.</span>

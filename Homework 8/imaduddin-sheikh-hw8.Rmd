@@ -1,0 +1,221 @@
+---
+title: "CS 422 - Homework 8"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Tuesday, April 19 2022 11:59:59 PM Chicago Time
+
+******
+
+### 2. Practicum Problems
+
+******
+
+### 2.1. K-means clustering
+
+******
+
+```{r}
+library("factoextra")
+library("ggplot2")
+library("dplyr")
+library("cluster")
+setwd("~/Homework 8")
+```
+
+```{r}
+txt.to.df <- function(txt.file,out.df) {
+  file19.txt.df <- read.csv(file= txt.file,
+                           header = FALSE,
+                           sep = "",
+                           dec = ".",
+                           comment.char = "#"
+                           
+                           )
+  
+  write.csv(file19.txt.df, file = out.df)
+  file19.txt.df <- read.csv(file= out.df,
+                           header = TRUE,
+                           sep = ",",
+                           dec = ".",
+                           comment.char = "#",
+                         skip = 4
+                           )
+  write.csv(file19.txt.df[,1:10], file = out.df,row.names = F)
+  file19.txt.df <- read.csv(out.df,row.names = 1)
+  row.names(file19.txt.df) <- NULL
+  
+  return( file19.txt.df)
+}
+```
+
+******
+
+### Part 2.1(a)
+
+******
+
+```{r}
+file19.df <- txt.to.df(txt.file = "file19.txt", out.df = "file19.csv")
+dim(file19.df)
+```
+******
+
+```{r}
+file19.df
+```
+
+```{r}
+summary(file19.df)
+```
+
+```{r}
+apply(file19.df,2,sd)
+```
+
+******
+
+### Part 2.1(a)(i)
+
+******
+
+<span style="color: blue;">Only the names <b>Name</b> feature is to be omitted. For the remaining features, the summary of the data extracted from the <i>file19.txt</i> and the standard deviations of the features indicate that they do not need to be omitted.</span>
+
+******
+
+```{r}
+df <- file19.df[-1]
+df
+```
+
+******
+
+### Part 2.1(a)(ii)
+
+******
+
+<span style="color: blue;">The mean of the data is not equal to zero for each feature. Hence, the data is not standardized.</span>
+
+******
+
+```{r}
+scaled.df <- scale(df)
+```
+
+```{r}
+summary(scaled.df)
+```
+
+******
+
+### Part 2.1(a)(iii)
+
+******
+
+<span style="color: blue;">The function implemented created at the start of the R notebook takes care of the cleaning and the creation of the cleaned data set. The function is called <i><b>txt.to.df</b></i>, and the cleaned data set is titled <i><b>file19.csv</b></i>.</span>
+
+******
+
+### Part 2.1(b)
+
+******
+
+### Part 2.1(b)(i)
+
+******
+
+```{r}
+fviz_nbclust(scaled.df, kmeans, method="silhouette")
+```
+
+```{r}
+fviz_nbclust(scaled.df, kmeans, method="wss")
+```
+
+******
+
+<span style="color: blue;">After taking both the WSS and Silhouette graphs into account, I feel that the 8 would be an ideal number for clusters. The average silhouette value is highest and the total WSS the second-lowest(very close to the minimum) when k = 8.</span>
+
+******
+
+### Part 2.1(b)(ii)
+
+******
+
+```{r}
+k <- kmeans(scaled.df, centers=8, nstart=25)
+```
+
+******
+
+```{r}
+k
+```
+
+```{r}
+fviz_cluster(k, data=scaled.df)
+```
+
+******
+
+### Part 2.1(b)(iii)
+
+******
+ 
+```{r}
+ob.per.cluster <-as.data.frame(table(k$cluster))
+names(ob.per.cluster) <-c("Cluster","Observations")
+print(ob.per.cluster)
+```
+
+******
+
+### Part 2.1(b)(iv)
+
+******
+ 
+```{r}
+print(paste("Total SSE of the clusters is", signif(k$tot.withinss, 5),"."))
+```
+
+******
+
+### Part 2.1(b)(v)
+
+******
+
+```{r}
+sse.cluster <-c()
+for (x in 1:max(k$cluster)){
+  sse.cluster <-rbind(sse.cluster,c(x,k$withinss[x]))
+}
+colnames(sse.cluster) <- c("Cluster", "SSE")
+print(sse.cluster)
+```
+
+******
+
+### Part 2.1(b)(vi)
+
+******
+
+```{r}
+for (i in 1:8) {
+  print(paste0("Group ", i, ": ", paste(unlist(file19.df[which(k$cluster==i),][1], use.names=FALSE), collapse=", ")))
+}
+```
+
+******
+
+<span style="color: blue;">I believe that all the results meet my expectations. I expected that members of the animal kingdom like bats, squirrels, and rats are all clustered together in their own groups. Secondly, Group 4 contains animals that mostly make up livestock, if not entirely. The Other 7 groups include animals are either from entirely different classes, or similar classes. I don't believe animals of similar/same class will be found in another group/cluster, unless the features significantly set them apart. In terms of SSE's, the <b>Total SSE</b> is ~52.3, so it is not bad. The ratio <b>between_SS / total_SS</b> is close to 90% which is a pretty good number. Lastly, looking at the <b>within SSE</b> metric for each cluster indicates a good clustering performance overall.<span>
+
+******

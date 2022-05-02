@@ -1,0 +1,210 @@
+---
+title: "CS 422 - Homework 6"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Wednesday, Mar 30 2022 11:59:59 PM Chicago Time [Extension Requested]
+
+******
+
+### 2. Practicum Problems
+
+******
+
+### 2.1. Association Rules
+
+******
+
+```{r}
+setwd("~/Homework 6")
+library(arules)
+```
+
+******
+
+### Part 2.1(a)
+
+******
+
+```{r}
+products.df <- read.csv("products.csv", header = FALSE)
+```
+
+```{r}
+# tr1.df <- read.transactions("tr-1k.csv", format = 'basket', cols = c(1), header = FALSE, sep = ',')
+# write(tr1.df, "tr-1k-canonical.csv")
+# tr1.trans <- read.csv("tr-1k-canonical.csv", header = FALSE, col.names = c("items"))
+# tr1.canonical.df <- (apply(tr1.trans, 1, replacement.function))
+# write(tr1.canonical.df, "tr-1k-canonical.csv")
+```
+
+```{r}
+# tr5.df <- read.transactions("tr-5k.csv", format = 'basket', cols = c(1), header = FALSE, sep = ',')
+# write(tr5.df, "tr-5k-canonical.csv")
+# tr5.trans <- read.csv("tr-5k-canonical.csv", header = FALSE, col.names = c("items"))
+# tr5.canonical.df <- (apply(tr5.trans, 1, replacement.function))
+# write(tr5.canonical.df, "tr-5k-canonical.csv")
+```
+
+```{r}
+# tr20.df <- read.transactions("tr-20k.csv", format = 'basket', cols = c(1), header = FALSE, sep = ',')
+# write(tr20.df, "tr-20k-canonical.csv")
+# tr20.trans <- read.csv("tr-20k-canonical.csv", header = FALSE, col.names = c("items"))
+# tr20.canonical.df <- (apply(tr20.trans, 1, replacement.function))
+# write(tr20.canonical.df, "tr-20k-canonical.csv")
+```
+
+```{r}
+# tr75.df <- read.transactions("tr-75k.csv", format = 'basket', cols = c(1), header = FALSE, sep = ',')
+# write(tr75.df, "tr-75k-canonical.csv")
+# tr75.trans <- read.csv("tr-75k-canonical.csv", header = FALSE, col.names = c("items"))
+# tr75.canonical.df <- (apply(tr75.trans, 1, replacement.function))
+# write(tr75.canonical.df, "tr-75k-canonical.csv")
+```
+
+******
+
+### Part 2.1(b)
+
+******
+
+```{r}
+tr1k.df <- read.transactions("tr-1k-canonical.csv",format = 'basket', header = FALSE, sep = ',')
+tr5k.df <- read.transactions("tr-5k-canonical.csv",format = 'basket', header = FALSE, sep = ',')
+tr20k.df <- read.transactions("tr-20k-canonical.csv",format = 'basket', header = FALSE, sep = ',')
+tr75k.df <- read.transactions("tr-75k-canonical.csv",format = 'basket', header = FALSE, sep = ',')
+```
+
+******
+
+```{r}
+itemFrequencyPlot(tr1k.df, support = 0.085)
+image(tr1k.df)
+```
+
+******
+
+```{r}
+rules.1k <- apriori(tr1k.df, parameter=list(support=0.05, target="frequent itemsets"))
+inspect(head(rules.1k, by="support", 15))
+```
+
+******
+
+<span style="color: blue;">After trying out different <i>minconf</i> values on the algorithm, I found that the data set with the 1000 transactions does not have any item set that has support greater than 0.108. <br />With the help of the code snippet above, here are 10 of the item sets with the highest support. This does justice to the histogram for the highest supported item sets in the 1000 transactions.</span>
+
+******
+
+```{r}
+rules.1k <- apriori(tr1k.df, parameter=list(support=0.01, confidence = 0.95, target="rules"))
+inspect(head(rules.1k, by="lift", 15))
+```
+
+******
+
+<span style="color: blue;">The association rules above provide a general picture of the 1000 transactions recorded. In this data set, some interesting rules can be found. One being that customers who bought Vanilla Frappuccino and Walnut Cookie were very likely to buy Chocolate Tart. A very high lift value and low support value supports this fact. </span>
+
+
+******
+
+```{r}
+itemFrequencyPlot(tr5k.df, support = 0.085)
+image(tr1k.df)
+```
+
+******
+
+```{r}
+rules.5k <- apriori(tr5k.df, parameter=list(support=0.05, target="frequent itemsets"))
+inspect(head(rules.5k, by="support", 15))
+```
+
+******
+
+<span style="color: blue;">Coffee Eclair, Hot Coffee and Tuile Cookie(also Strawberry Cake) have overtaken Gongolais Cookie in this data set which is evident by larger support values.</span>
+
+******
+
+```{r}
+rules.5k <- apriori(tr5k.df, parameter=list(support=0.01, confidence = 0.95, target="rules"))
+inspect(head(rules.5k, by="lift", 15))
+```
+
+******
+
+<span style="color: blue;">The association rules above show that Lemon lemonades and cookies go very highly and likely with raspberry cookies and lemonade, with the help of green teas.</span>
+
+******
+
+```{r}
+itemFrequencyPlot(tr20k.df, support = 0.085)
+image(tr20k.df)
+```
+
+******
+
+```{r}
+rules.20k <- apriori(tr20k.df, parameter=list(support=0.05, target="frequent itemsets"))
+inspect(head(rules.20k, by="support", 15))
+```
+
+******
+
+<span style="color: blue;">There is not a significant result in the 20,000-transaction data set when compared with the products frequently found/bought in transactions in the data set with 5,000 transactions. COffee Eclair, Hot Coffee and Tuile Cookie were top 3 back there as well.</span>
+
+******
+
+```{r}
+rules.20k <- apriori(tr20k.df, parameter=list(support=0.01, confidence = 0.95, target="rules"))
+inspect(head(rules.20k, by="lift", 15))
+```
+
+******
+
+<span style="color: blue;">Again, there is not much of a surprise in the association rules of this data set. Raspberry lemonades and cookies are going well in lemon cookies and lemonade, green tea is also involved. However, one interesting rule came up. Customers who bought croissant and tarts of apple flavor, and cherry soda at the same time also bought apple danish. Non-perishable apple-flavored products went well together.</span>
+
+******
+
+```{r}
+itemFrequencyPlot(tr75k.df, support = 0.085)
+image(tr75k.df)
+```
+
+******
+
+```{r}
+rules.75k <- apriori(tr75k.df, parameter=list(support=0.05, target="frequent itemsets"))
+inspect(head(rules.75k, by="support", 15))
+```
+
+******
+
+<span style="color: blue;">Same pattern of item set frequency as seen in the data sets with transactions of 5,000 and 20,000.</span>
+
+******
+
+```{r}
+rules.75k <- apriori(tr75k.df, parameter=list(support=0.01, confidence = 0.95, target="rules"))
+inspect(head(rules.75k, by="lift", 15))
+```
+
+******
+
+<span style="color: blue;">Same association rules observed as in 20,000-transaction data set.</span>
+
+******
+
+### Part 2.1(c)
+
+******
+
+<span style="color: blue;">In the 1000-transaction data set, the association rules formed from it weren't that generalized as they were in the the latter data sets. In the 5000, 20000, and 75000-transaction data sets, we could observe with good lift value how customers tend to buy lemon and raspberry-flavored cookies and lemonade, with green tea. With the emergence of apple-flavored items, we can easily observe that the patterns/rules begin to seem robust/generalizable as more transactions are added in the equation.</span>

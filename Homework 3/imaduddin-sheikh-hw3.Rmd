@@ -1,0 +1,94 @@
+---
+title: "CS 422 - Homework 3"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Wednesday, Feb 24 2022 11:59:59 PM Chicago Time  
+
+### Problem 1.1: Decision Tree on the Iris Dataset
+
+******
+```{r}
+setwd("~/Homework 3")
+iris.df <- data.frame(iris)
+library("rpart")
+library("rpart.plot")
+```
+
+******
+
+```{r}
+set.seed(1133)
+index <- sample(1:nrow(iris.df), 0.95*dim(iris.df)[1])
+train.df <- iris.df[index,]
+test.df <- iris.df[-index,]
+```
+```{r}
+train.df
+```
+
+******
+
+```{r}
+dtree <- rpart(Species ~ Sepal.Length + Sepal.Width + Petal.Length, data = iris.df, method = "class")
+rpart.plot(dtree, extra = 104, fallen.leaves = T, type = 4, main = "Iris Dataset Decision Tree")
+```
+```{r}
+dtree
+```
+
+******
+
+```{r}
+dtree.summ <- summary(dtree)
+```
+
+******
+
+### Part 1.1(a)
+
+<span style="color: blue;">There are 3 levels.</span>
+
+******
+
+### Part 1.1(b)
+```{r}
+print("Level 0, Vertex 1: Default class label is setosa")
+print("Level 1, Vertex 2: Default class label is versicolor")
+```
+
+******
+
+### Part 1.1(c)
+```{r}
+print("Level 0, split on attribute: Petal.Length")
+print("Split points: < 2.5 left subtree, >= 2.5 right subtree")
+cat("\n")
+print("Level 1, split on attribute: Petal.Length")
+print("Split points: < 4.8 left subtree, >= 4.8 right subtree")
+```
+
+******
+
+### Part 1.1(d)
+
+******
+
+### Part 1.1(d)(i)
+
+<span style="color: blue;">The second line in each vertex indicates the information gain that is calculated at each and every stage of the decision tree.</span>
+
+******
+
+### Part 1.1(d)(ii)
+
+<span style="color: blue;">The last line represents the probability of that vertex belonging to these given class labels.</span>

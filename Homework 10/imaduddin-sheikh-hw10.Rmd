@@ -1,0 +1,227 @@
+---
+title: "CS 422 - Homework 10"
+author: "Imaduddin Sheikh"
+output:
+  html_document: 
+    toc: yes
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Wednesday May 04, 2022, 11:59:59 PM Chicago Time
+
+******
+
+### 1. Practicum Problems
+
+******
+
+### Recommender Systems (Content-based recommendations)
+
+******
+
+<span style="color: red;">Please go to the last line of this markdown file to test the <b>main</b> function and recommender system program.</span>
+
+******
+
+```{r}
+setwd("~/Homework 10")
+library("lsa")
+library(tidyr)
+```
+
+```{r}
+ratings <- read.csv("ratings.csv")
+```
+
+```{r}
+movies <- read.csv("movies.csv", sep = ",")
+```
+
+```{r}
+student.id <- 20442079 %% 671
+```
+
+******
+
+#### Building user profile
+
+******
+
+```{r}
+# uprof.r <- ratings[ratings$userId == student.id,]
+# genres.list <- c("Action", "Adventure", "Animation",
+#            "Children", "Comedy", "Crime", "Documentary",
+#            "Drama", "Fantasy", "Film-Noir", "Horror",
+#            "IMAX", "Musical", "Mystery", "Romance",
+#            "Sci-Fi", "Thriller", "War", "Western",
+#            "(no genres listed)")
+# uprof.g <- data.frame()
+# for (genre in genres.list) {
+#   uprof.g[[genre]] <- as.numeric()
+# }
+# movie.genres <- movies[movies$movieId %in% uprof.r$movieId,]
+# for (row in row.names(movie.genres)) {
+#   movie <- strsplit(movie.genres[row,]$genres, "\\|")
+#   for (m in movie) {
+#     uprof.g[as.character(movie.genres[row,c("movieId")]), as.character(m)] = 1
+#   }
+#   rm(movie)
+# }
+# rm(row)
+# rm(m)
+# 
+# user.profile <- colSums(uprof.g[,], na.rm = TRUE)
+# user.profile <- user.profile/nrow(movie.genres)
+# user.profile
+```
+
+******
+
+#### Building movie profile
+
+******
+
+```{r}
+# movie.profile <- data.frame()
+# for (genre in genres.list) {
+#   movie.profile[[genre]] <- as.numeric()
+# }
+# 
+# for (row in row.names(movies)) {
+#   movie <- strsplit(movies[row,]$genres, "\\|")
+# 
+#   for (m in movie) {
+#     movie.profile[as.character(movies[row, c("movieId")]), as.character(m)] = 1
+#   }
+# }
+# rm(row)
+# rm(m)
+# rm(movie)
+# movie.profile
+```
+
+******
+
+#### Recommender System
+
+******
+
+```{r}
+# movie.profile[is.na(movie.profile)] <- 0
+# result.id <- c()
+# result.name <- c()
+# result.similarity <- c()
+# 
+# x <- 1
+# for (row in row.names(movie.profile)) {
+#   result.id[x] <- row
+#   result.name[x] <- movies[movies$movieId == row, c("title")]
+#   result.similarity[x] <- lsa::cosine(user.profile, unlist(movie.profile[row,]))
+#   x <- x + 1
+# }
+# 
+# result <- data.frame(MovieId = result.id, MovieName = result.name, Similarity = result.similarity)
+# 
+# result <- result[order(result$Similarity, decreasing = TRUE),]
+# 
+# cat("User ID", student.id, "has the following 10 movies: ", paste0(head(result$MovieId, 10), collapse = ", "))
+# cat('\n')
+# cat("Of these, the following movies are recommended: ")
+# head(result, 5)
+```
+
+******
+
+### Recommender System Algorithm
+
+******
+
+```{r}
+main <- function(user.id, movie.list) {
+  # Building a user profile
+  uprof.r <- ratings[ratings$userId == user.id,]
+  genres.list <- c("Action", "Adventure", "Animation",
+           "Children", "Comedy", "Crime", "Documentary",
+           "Drama", "Fantasy", "Film-Noir", "Horror", 
+           "IMAX", "Musical", "Mystery", "Romance", 
+           "Sci-Fi", "Thriller", "War", "Western", 
+           "(no genres listed)")
+  uprof.g <- data.frame()
+  for (genre in genres.list) {
+    uprof.g[[genre]] <- as.numeric()
+  }
+  movie.genres <- movies[movies$movieId %in% uprof.r$movieId,]
+  for (row in row.names(movie.genres)) {
+    movie <- strsplit(movie.genres[row,]$genres, "\\|")
+    for (m in movie) {
+      uprof.g[as.character(movie.genres[row,c("movieId")]), as.character(m)] = 1
+    }
+  }
+  rm(row)
+  rm(m)
+  rm(movie)
+
+  user.profile <- colSums(uprof.g[,], na.rm = TRUE)
+  user.profile <- user.profile/nrow(movie.genres)
+
+  random.movies <- movies[movies$movieId %in% movie.list,]
+  # random.movies <- random.movies %>% drop_na()
+  movie.profile <- data.frame()
+  for (genre in genres.list) {
+    movie.profile[[genre]] <- as.numeric()
+  }
+
+  for (row in row.names(random.movies)) {
+    movie <- strsplit(random.movies[row,]$genres, "\\|")
+  
+    for (m in movie) {
+      movie.profile[as.character(random.movies[row, c("movieId")]), as.character(m)] = 1
+    }
+  }
+  rm(row)
+  rm(m)
+  rm(movie)
+
+  # Recommender System
+  movie.profile[is.na(movie.profile)] <- 0
+  result.id <- c()
+  result.name <- c()
+  result.similarity <- c()
+
+  x <- 1
+  for (row in row.names(movie.profile)) {
+    result.id[x] <- row
+    result.name[x] <- random.movies[random.movies$movieId == row, c("title")]
+    result.similarity[x] <- signif(lsa::cosine(user.profile, unlist(movie.profile[row,])), 4)
+    x <- x + 1
+  }
+
+  result <- data.frame(MovieId = result.id, MovieName = result.name, Similarity = result.similarity)
+  result <- result[order(result$Similarity, decreasing = TRUE),]
+
+  cat("User ID", student.id, "has the following 10 movies: ", paste0(head(result$MovieId, 10), collapse = ", "))
+  cat('\n')
+  cat("Of these, the following movies are recommended: ")
+  top.5 <- head(result, 5)
+  row.names(top.5) <- NULL
+  top.5
+}
+```
+
+******
+******
+
+### MOVIE RECOMMENDER SYSTEM PROGRAM
+
+******
+******
+
+```{r}
+main(550, c(5612, 943, 7358, 25, 2108, 8371, 2699, 8923, 2487, 102800))
+```
+
+******

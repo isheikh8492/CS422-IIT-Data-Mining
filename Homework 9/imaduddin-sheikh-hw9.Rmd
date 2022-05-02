@@ -1,0 +1,403 @@
+---
+title: "CS 422 - Homework 9"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Sunday May 01, 2022, 11:59:59 PM Chicago Time
+
+******
+
+### 2. Practicum Problems
+
+******
+
+### 2.1. DBScan
+
+******
+
+```{r}
+library("factoextra")
+library("ggplot2")
+library("dplyr")
+library("cluster")
+library("fpc")
+library("dbscan")
+setwd("~/Homework 9")
+s1.df <- read.csv("s1.csv")
+```
+
+```{r}
+s1.df
+```
+
+```{r}
+summary(s1.df)
+```
+
+******
+
+### Part 2.1(a)
+
+******
+
+<span style="color: blue;">I think it is necessary to standardize the data. According to the summary obtained from the s1 data set. The range of the values in both attributes is very high so it would take some time for the DBScan clustering algorithm to converge if not standardized.</span>
+
+******
+
+### Part 2.1(b)
+
+******
+
+```{r}
+plot(s1.df)
+```
+
+******
+
+<span style="color: blue;">According to the graph plotted above, I can observe <b>15</b> clusters. The 10 clusters observed in the left and middle are easily separable. However, the 5 clusters on the right are not clearly easily separable(excluding the one at the bottom-right corner of the scatter plot). I selected 15 based on my intuition.</span>
+
+******
+
+### Part 2.1(c)
+
+******
+
+### Part 2.1(c)(i)
+
+******
+
+```{r}
+scaled.df <- scale(s1.df)
+```
+
+```{r}
+summary(scaled.df)
+```
+******
+
+```{r}
+fviz_nbclust(scaled.df, kmeans, method="wss")
+```
+
+******
+
+### Part 2.1(c)(ii)
+
+******
+
+```{r}
+fviz_nbclust(scaled.df, kmeans, method="silhouette")
+```
+
+******
+
+### Part 2.1(c)(iii)
+
+<span style="color: blue;">After taking both the WSS and Silhouette graphs into account, <b>8</b> would be a good number for clustering. The average silhouette value at k=8 is high enough such that the values k>8 have minimal change on the average silhouette value. Similarly, the total within SS value at k>8 doesn't change significantly.</span>
+
+******
+
+### Part 2.1(d)
+
+******
+
+### Part 2.1(d)(i)
+
+******
+
+```{r}
+k <- kmeans(scaled.df, centers=8, nstart=55)
+```
+
+******
+
+```{r}
+k
+```
+
+******
+
+```{r}
+fviz_cluster(k, data=scaled.df)
+```
+
+******
+
+### Part 2.1(d)(ii)
+
+******
+
+<span style="color: blue;">The K-Means clustering algorithm has clustered, for the most part, 2 nearest high-density portions of the graph into a single cluster. However, the blue cluster on the top-right border of the plot doesn't meet the above statement, and cuts a portion of the graph that has high density(the part that should have been in purple cluster).</span>
+
+******
+
+### Part 2.1(e)
+
+******
+
+### Part 2.1(e)(i)
+
+******
+
+<span style="color: blue;">MinPts = <b>6</b> should be a reasonable value. Even though the data set has 2 dimensions, MinPts = 6 will be an ideal parameter due to spread of points on the edges of some clusters.</span>
+
+******
+
+### Part 2.1(e)(ii)
+
+******
+
+```{r}
+epsilon <- seq(0.01, 0.22, 0.01)
+avg_sil_width <- c()
+eps.array <- c()
+
+```
+
+```{r}
+for (ep in epsilon) {
+  eps.array <- append(eps.array, ep)
+  db <- fpc::dbscan(scaled.df, eps = ep, MinPts = 4)
+  avg_sil_width <- append(avg_sil_width, mean(silhouette(db$cluster, dist(scaled.df))[,"sil_width"]))
+  rm(db)
+}
+```
+
+```{r}
+eps.sil.df <- data.frame(eps.array, avg_sil_width)
+eps.sil.df
+
+plot(eps.sil.df,
+        xlab="Epsilon (eps)",
+        ylab="Average Silheoutte Width", type="b", col="blue", lwd=2, pch=19)
+```
+
+******
+
+```{r}
+eps.sil.df[which.max(eps.sil.df[,"avg_sil_width"]),]
+```
+
+******
+
+```{r}
+dbscan::kNNdistplot(scaled.df, k =  6)
+abline(h = 0.08, lty = 2)
+```
+
+******
+
+```{r}
+db <- fpc::dbscan(scaled.df, eps = 0.08, MinPts = 6)
+plot(db, scaled.df, main = "DBSCAN", frame = FALSE)
+```
+******
+
+```{r}
+fviz_cluster(db, scaled.df, stand = FALSE, ellipse = F, geom = "point")
+```
+
+******
+
+```{r}
+db
+```
+
+******
+
+<span style="color: blue;">At minPts = <b>6</b>, eps = <b>0.08</b>, there are <b>15</b> clusters.</span>
+
+******
+
+### 2.2. Principal Component Analysis
+
+******
+
+### Part 2.2(a)
+
+******
+
+### Part 2.2(a)(i)
+
+******
+
+```{r}
+countries.df <- read.csv("countries.csv", row.names = 1)
+countries.df
+```
+
+******
+
+```{r}
+summary(countries.df)
+```
+
+******
+
+### Part 2.2(a)(ii)
+
+******
+
+```{r}
+n <- 1
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 2
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 3
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 4
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 5
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 6
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 7
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+```{r}
+n <- 8
+boxplot(countries.df[,n], ylab = colnames(countries.df)[n], main = paste0(colnames(countries.df)[n], " Box Plot"))
+```
+
+******
+
+<span style="color: blue;">The two outliers in the Pop box plot correspond to India and China. The population of the two countries is significantly high as opposed to other countries.</span>
+
+******
+
+### Part 2.2(b)
+
+******
+
+### Part 2.2(b)(i)
+
+******
+
+```{r}
+pca <- prcomp(countries.df, center = TRUE, scale = TRUE)
+```
+
+```{r}
+summary(pca)
+```
+
+******
+
+<span style="color: blue;">There is <b>no component</b> that explains at least 90% of variance. The highest proportion of a variance from all the components is 53.1%.</span>
+
+******
+
+### Part 2.2(b)(ii)
+
+******
+
+```{r}
+library(factoextra)
+fviz_eig(pca)
+```
+
+******
+
+### Part 2.2(b)(iii)
+
+******
+
+<span style="color: blue;">According to the scree plot, 5 principal components should do the trick for feature reduction.</span>
+
+******
+
+### Part 2.2(c)
+
+******
+
+```{r}
+pca
+```
+
+******
+
+### Part 2.2(c)(i)
+
+******
+
+<span style="color: blue;">PC1 has a  positive correlation with GDP, Lifeexp, Oilcons, and Tel,while having negatively correlation with HIV, Mil, Pop, and Unempl. GDP, Lifeexp, Oilcons, and Tel all are high values, being close to 0.45. My expectation from PC1 is that it indicates that a country with good economy will have a good, and healthy quality of life despite having a comparatively lower population.. The negative value of HIV and positive value of Lifeexp indicate good health. I think that high positive values of Oilcons and Tel could mean people are more readily able to fulfill necessities of life like personal travel, and availability of internet/information. And high GDP also tends to lower unemployment.</span>
+
+******
+
+### Part 2.2(c)(ii)
+
+******
+
+<span style="color: blue;">PC2 is positively correlated with GDP, Lifeexp, Mil, Oilcons, Pop, and Tel. It is negatively correlated with HIV, and Unempl. Basing on the values and correlations, I expect PC2 to be a more generalizable form of PC1 where it indicates that low HIV(more healthy population) in turn leads to higher population, while also indicating how a country with high military spending percentage interestingly tends to have low unemployment. It could indicate that military spending percentage does have a positive role to play in improving population's quality of life and health.</span>
+
+******
+
+### Part 2.2(d)
+
+******
+
+```{r}
+biplot(pca, choices = 1:2)
+```
+
+******
+
+### Part 2.2(d)(i)
+
+******
+
+```{r}
+pca$x[c("Brazil", "UK", "Japan"),1:2]
+```
+
+******
+
+### Part 2.2(d)(ii)
+
+******
+
+```{r}
+countries.df
+```
+
+```{r}
+pca
+```
+
+******
+
+<span style="color: blue;">Brazil has PC1 = -2.04 and PC2 = -1.04. This makes sense to me for PC1 because Brazil has a low GDP, and one can see the effects by observing relatively lower Lifeexp, Oilcons, and Tel, coupled with high unemployment rate. Low population and military spending percentage and high unemployment contribute to the negative value of PC2.</span>
+
+<span style="color: blue;">Japan has PC1 = 2.01 and PC2 = -0.0574. Japan has a very high GDP, Lifeexp, Oilcons, and Tel, in turn resulting to a significantly high positive value for PC1 that we see. However, the  low Mil and Pop, and at the same time, a low unemployment rate result in a pretty low(magnitude-wise) and negative value for PC2.</span>
+
+<span style="color: blue;">UK has PC1 = 1.46 and PC2 = 0.8345. This makes sense because UK has a high GDP, Lifeexp, Tel but OilCons is quite low giving a moderate and positive for PC1. UK also has low Unempl, HIV,and a very high Mil. Because it has a low population, the PC2 value is positive, and low magnitude-wise.</span>
+
+******
