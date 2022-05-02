@@ -1,0 +1,247 @@
+---
+title: "CS 422 - Homework 2"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+###### Due Date: Wednesday, Feb 16 2022 11:59:59 PM Chicago Time  
+
+### 2.    Programming Problem
+
+
+### 2.1
+
+******
+```{r}
+library("ISLR")
+library('dplyr')
+library('sjstats')
+```
+```{r}
+Auto
+```
+```{r}
+set.seed(1122)
+index <- sample(1:nrow(Auto), 0.95*dim(Auto)[1])
+train.df <- Auto[index,]
+test.df <- Auto[-index,]
+index
+```
+******
+### Part 2.1(a)
+
+```{r}
+lr <- lm(mpg ~ . - name, data = train.df)
+```
+******
+### Part 2.1(a)(i)
+
+<span style="color: blue;">'name' is not a realistic but a redundant predictor that will result in misleading model. The purpose of the name attribute is to uniquely identify a row which is already fulfilled(by table index).</span>
+
+******
+### Part 2.1(a)(ii)
+
+```{r}
+lr_summ <- summary(lr)
+lr_summ
+```
+```{r}
+# RSS
+#calculate the number of model parameters - 1
+k=length(lr$coefficients)-1
+
+#calculate sum of squared residuals
+SSE=sum(lr$residuals**2)
+
+#calculate total observations in dataset
+n=length(lr$residuals)
+
+#calculate residual standard error
+RSE = sqrt(SSE/(n-(1+k)))
+```
+```{r}
+#RMSE
+RMSE = sqrt(SSE/(length(lr$residuals)))
+```
+```{r}
+paste0("R-sq value is ", signif(lr_summ$r.squared, 2), ".")
+paste0("Adjusted R-sq value is ", signif(lr_summ$adj.r.squared, 2), ".")
+paste0("RSE is ", signif(RSE, 2), ".")
+paste0("RMSE is ", signif(RMSE, 2), ".")
+```
+<span style="color: blue;">The model is good. R-squared is close to 1 so variance is explained by the model pretty well. The RSE and RMSE values are also quite close to 0.</span>
+
+******
+
+### Part 2.1(a)(iii)
+
+```{r}
+plot(lr, which = 1)
+```
+******
+
+### Part 2.1(a)(iv)
+```{r}
+library(ggplot2)
+
+#create histogram of residuals
+g3 <- qplot(lr$residuals,
+               geom = "histogram",
+               bins = 10) +
+         labs(title = "Histogram of Residuals",
+              x = "Residual")
+plot(g3)
+```
+
+<span style="color: blue;">The overall pattern of the residuals does appear to be bell-shaped, and symmetric. The histogram shows the residuals are normally distributed.  </span>
+
+******
+
+### Part 2.1(b)(i)
+```{r}
+# Judging by the lowest p-values, 'displacement', 'weight', and 'year' appear to be the 3 most statistically significant predictors.
+lr2 <-  lm(mpg ~ displacement + weight + year, data = Auto)
+```
+
+******
+
+### Part 2.1(b)(ii)
+```{r}
+# RSS
+#calculate the number of model parameters - 1
+k2=length(lr2$coefficients)-1
+
+#calculate sum of squared residuals
+SSE2=sum(lr2$residuals**2)
+
+#calculate total observations in dataset
+n2=length(lr2$residuals)
+
+#calculate residual standard error
+RSE2 = sqrt(SSE2/(n2-(1+k2)))
+```
+```{r}
+#RMSE
+RMSE2 = sqrt(SSE/(length(lr2$residuals)))
+```
+```{r}
+lr2_summ <- summary(lr2)
+lr2_summ
+```
+```{r}
+paste0("R-sq value is ", signif(lr2_summ$r.squared, 2), ".")
+paste0("Adjusted R-sq value is ", signif(lr2_summ$adj.r.squared, 2), ".")
+paste0("RSE is ", signif(RSE2, 2), ".")
+paste0("RMSE is ", signif(RMSE2, 2), ".")
+```
+<span style="color: blue;">The model is good. R-squared is close to 1 so variance is explained by the model pretty well. The RSE and RMSE values are also quite close to 0, however RMSE is a little low this time. The difference in the model accuracy and model performance compared to (a) is not so much.</span>
+
+******
+### Part 2.1(b)(iii)
+
+```{r}
+plot(lr2, which = 1)
+```
+******
+### Part 2.1(b)(iv)
+```{r}
+#create histogram of residuals
+g4 <- qplot(lr2$residuals,
+               geom = "histogram",
+               bins = 10) +
+         labs(title = "Histogram of Residuals",
+              x = "Residual")
+plot(g4)
+```
+<span style="color: blue;">The overall pattern of the residuals does appear to be bell-shaped, but is a little skewed from the right. However, the histogram does show the residuals to be normally distributed.</span>
+
+******
+
+### Part 2.1(b)(v)
+<span style="color: blue;">Both models (a) and (b) display very similar model performance and qualities concerning variance. The residual plots are a testament of that. However, I feel that model in (b) performs better. Even after taking only 3 predictors from the original data set, we still managed to get a good accurate model.</span>
+
+******
+
+### Part 2.1(c)
+```{r}
+test2.df = test.df[c('displacement', 'weight', 'year')]
+test2.df
+```
+```{r}
+predicted_mpg <- predict(lr2, newdata = test2.df)
+predicted_mpg
+lr2.df <- data.frame(predicted_mpg, test.df[c('mpg')])
+```
+```{r}
+colnames(lr2.df) <- c('Prediction', 'Response')
+lr2.df
+```
+
+******
+
+### Part 2.1(d)
+```{r}
+count2.df <- predict(lr2, test2.df, interval = "confidence", level = 0.95)
+count2.df <- data.frame(lr2.df, count2.df)
+```
+```{r}
+#Have to remove duplicate 'fitted' mpg column from the dataset
+count2.df <- subset(count2.df, select = -c(3))
+colnames(count2.df) <- c("Prediction", "Response", "Lower", "Upper")
+count2.df
+```
+```{r}
+check <- function(x,y,z) {
+  if ((x <= y) & (y <= z)) {
+    return(1)
+  } else {
+    return(0)
+  }
+}
+```
+```{r}
+confid.df <- cbind(count2.df, Matches = mapply(check, count2.df$Lower, count2.df$Prediction, count2.df$Upper))
+confid.df
+```
+******
+
+### Part 2.1(e)
+```{r}
+count3.df <- predict(lr2, test2.df, interval = "prediction", level = 0.95)
+count3.df <- data.frame(lr2.df, count3.df)
+```
+```{r}
+#Have to remove duplicate 'fitted' mpg column from the dataset
+count3.df <- subset(count3.df, select = -c(3))
+colnames(count3.df) <- c("Prediction", "Response", "Lower", "Upper")
+count3.df
+```
+```{r}
+predic_i.df <- cbind(count3.df, Matches = mapply(check, count3.df$Lower, count3.df$Prediction, count3.df$Upper))
+predic_i.df
+```
+******
+
+### Part 2.1(f)
+
+******
+
+### Part 2.1(f)(i)
+
+<span style="color: blue;">Both (d) and (e) have equal number of matches on the test data which 20 out of 20.</span>
+
+******
+
+### Part 2.1(f)(ii)
+<span style="color: blue;">If there's the 'mpg' parameter in (d) matches, then the 'mpg' parameter in (e) also matches. This is because prediction interval is wider than the confidence interval, as it takes variance into consideration.</span>`
+
+******
+

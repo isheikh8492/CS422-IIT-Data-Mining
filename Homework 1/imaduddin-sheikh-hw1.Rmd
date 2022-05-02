@@ -1,0 +1,118 @@
+---
+title: "CS 422 - Homework 1"
+author: "Imaduddin Sheikh"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+###### Due Date: Saturday, Feb 5 2022 11:59:59 PM Chicago Time  
+
+******
+
+### 2.    Programming Problem
+
+
+### 2.1   Explanatory Data Analysis
+
+******
+  
+
+### Part 2.1(i)
+```{r}
+data.df = read.csv(file = 'us-covid.csv', comment='#')
+```
+```{r}
+head(data.df)
+```
+******
+### Part 2.1(ii)
+
+```{r}
+data.df$confirmed_deaths
+```
+```{r}
+nrow(data.df)
+```
+```{r}
+nrow(data.df[data.df$confirmed_deaths=="N/A",])
+```
+```{r}
+data.df = subset(data.df, select = -c(confirmed_deaths))
+```
+```{r}
+head(data.df)
+```
+******
+### Part 2.1(iii)(a)
+```{r}
+library(dplyr)
+head(data.df %>% arrange(desc(total_cases)), n=6)
+```
+******
+### Part 2.1(iii)(b)
+```{r}
+tail(data.df %>% arrange(desc(total_cases)), n=6)
+```
+******
+### Part 2.1(iv)
+```{r}
+library(psych)
+pairs.panels(data.df)
+```
+```{r}
+data.df[,"level"]
+```
+******
+### Part 2.1(iv)(a)
+```{r}
+select(data.df, -c("state", "level"))
+```
+```{r}
+pairs.panels(select(data.df, -c("state", "level")))
+```
+<span style="color: blue;">The first two columns are highly correlated to each other. The level always gives off a 'high' value for each corresponding state. The state column acts as an identifier for each data object in the data set. So there is no necessity to visualize the 'state' and 'level' columns and find a correlation between them and the rest of the attributes.</span>
+
+******
+
+### Part 2.1(iv)(b)
+
+<span style="color: blue;">'total_cases' and 'total_deaths' attributes are highly correlated, having a collinearity of 0.98.</span>
+
+******
+
+### Part 2.1(iv)(c)
+
+<span style="color: blue;">'cases_last_7_days' and 'case_rate_per_100K' attributes highly contradict each other, having a collinearity of 0.00.</span>
+
+******
+
+### Part 2.1(v)
+```{r}
+cases_death.df = data.df[c("state", "total_deaths", "confirmed", "probable", "total_cases")]
+cases_death.df
+```
+******
+### Part 2.1(v)(a)
+```{r}
+plot(cases_death.df$confirmed + cases_death.df$probable, cases_death.df$total_deaths,
+     xlab="Confirmed + Probable Cases", ylab="Total Deaths", main = "Confirmed + Probable Cases vs Total Deaths")
+```
+******
+### Part 2.1(v)(b)
+
+<span style="color: blue;">After plotting the scatter plot of sum of Confirmed and Probable Cases against the total number of deaths in each state, some data points can be found that have a non-zero value for total deaths but a zero value for the sum of Confirmed and Probable Cases in the corresponding state.Such condition is an anomaly because it is not possible for total deaths to be zero if there were never any cases(confirmed or probable).</span>
+
+******
+
+### Part 2.1(v)(c)
+```{r}
+cases_death.df[cases_death.df$confirmed+cases_death.df$probable == 0,]
+```
+
